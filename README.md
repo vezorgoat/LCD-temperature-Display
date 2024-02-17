@@ -1,1 +1,1 @@
-# LCD-temperature-Display
+pip install smbus2
