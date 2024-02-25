@@ -50,5 +50,3 @@ while True:
 
     # Reset analog buffer
     analogBuffer = [0] * 30
-    # Reset analog buffer
-    analogBuffer = [0] * 30
