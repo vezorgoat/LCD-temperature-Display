@@ -1,5 +1,15 @@
 import spidev
 import time
+import logging
+import RPi.GPIO as GPIO
+
+# Setup GPIO for LED
+LED_PIN = 18  # Example pin, choose one available on your Raspberry Pi
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(LED_PIN, GPIO.OUT)
+
+# Setup logging
+logging.basicConfig(filename='pH_data.log', level=logging.INFO)
 
 # Define SPI bus and device (ADC)
 spi = spidev.SpiDev()
@@ -21,14 +31,20 @@ def main():
             # Convert ADC value to pH value (you'll need to calibrate this based on your pH module)
             pH_value = convert_to_pH(adc_value)  # You need to implement this function
 
-            # Print pH value
-            print("pH Value:", pH_value)
+            # Print and log pH value
+            logging.info("pH Value: %f", pH_value)
+
+            # Toggle LED
+            GPIO.output(LED_PIN, GPIO.HIGH)
+            time.sleep(0.1)
+            GPIO.output(LED_PIN, GPIO.LOW)
 
             # Adjust the delay based on your sampling requirements
             time.sleep(1)
 
     except KeyboardInterrupt:
         spi.close()
+        GPIO.cleanup()
 
 # Function to convert ADC value to pH value (you'll need to implement this based on your pH module's calibration)
 def convert_to_pH(adc_value):
