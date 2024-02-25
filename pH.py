@@ -11,7 +11,7 @@ ads1115.setAddr_ADS1115(0x48)  # Set the I2C address of the ADC
 ads1115.setGain(ADS1115_REG_CONFIG_PGA_6_144V)  # Set the gain to 6.144V
 
 # Calibration value obtained from your calibration process
-calibration_value = 21.34 - 0.7  # Replace this with your actual calibration value
+calibration_value = 7.0  # Adjust this value based on your calibration
 
 # Main loop
 while True:
@@ -19,7 +19,7 @@ while True:
     analog_voltage = ads1115.readVoltage(0)['r']  # Assuming pH sensor is connected to channel 0
 
     # Calculate pH value using the calibration value
-    ph_value = -5.70 * analog_voltage + calibration_value
+    ph_value = 14.0 - (analog_voltage + calibration_value) / 1000.0  # Adjust this formula as needed
 
     # Print pH value
     print("pH Value:", ph_value)
