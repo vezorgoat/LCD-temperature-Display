@@ -18,3 +18,6 @@ display.lcd_display_string("Temp: {:.1f}C {:.1f}F".format(temp_c, temp_f), 2)
 pip install adafruit-blinka
 
 pip install adafruit-circuitpython-charlcd
+
+
+sudo pip install spidev
