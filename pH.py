@@ -1,79 +1,56 @@
 import time
-import smbus
-import Adafruit_GPIO.SPI as SPI
-import Adafruit_SSD1306
-from threading import Timer
+import sys
+sys.path.append('../')
+from CQRobot_ADS1115 import ADS1115
 
-calibration_value = 21.34 - 0.7
-phval = 0
-avgval = 0
-buffer_arr = [0] * 10
-temp = 0
-ph_act = 0.0
+# ADS1115 configuration
+ads1115 = ADS1115()
+ads1115.setAddr_ADS1115(0x48)
+ads1115.setGain(ADS1115_REG_CONFIG_PGA_6_144V)
 
-# Define display constants
-SCREEN_WIDTH = 128
-SCREEN_HEIGHT = 64
-RESET_PIN = None
-I2C_ADDRESS = 0x3C
-i2c = smbus.SMBus(1)
+# Constants
+VREF = 5.0
+analogBuffer = [0] * 30
+analogBufferTemp = [0] * 30
+analogBufferIndex = 0
+copyIndex = 0
+averageVoltage = 0
+phValue = 0
+temperature = 25  # Temperature in Celsius
 
-# Initialize display
-disp = Adafruit_SSD1306.SSD1306_128_64(rst=RESET_PIN, i2c_bus=i2c)
-disp.begin()
-disp.clear()
-disp.display()
+# Function to calculate median value
+def getMedianNum(iFilterLen):
+    analogBufferTemp.sort()
+    if iFilterLen & 1 > 0:
+        median_value = analogBufferTemp[(iFilterLen - 1) // 2]
+    else:
+        median_value = (analogBufferTemp[iFilterLen // 2] + analogBufferTemp[iFilterLen // 2 - 1]) / 2
+    return median_value
 
-# Define timer interval
-TIMER_INTERVAL = 0.5
+analogSampleTimepoint = time.time()
+printTimepoint = time.time()
 
-def display_pHValue():
-    global ph_act
-    # Display pH value on OLED
-    disp.clear()
-    disp.setTextSize(2)
-    disp.setCursor(0, 0)
-    disp.print("pH:")
-    disp.print(ph_act)
-    disp.display()
+while True:
+    # Read analog voltage from pH sensor
+    if time.time() - analogSampleTimepoint > 0.04:
+        analogSampleTimepoint = time.time()
+        analogBuffer[analogBufferIndex] = ads1115.readVoltage(0)['r']  # Assuming pH sensor is connected to channel 0
+        analogBufferIndex += 1
+        if analogBufferIndex == 30:
+            analogBufferIndex = 0
 
-def read_adc(channel):
-    bus = smbus.SMBus(1)
-    data = bus.read_i2c_block_data(0x48, 0x01)
-    # Convert data to ADC value
-    adc_value = data[0] * 256 + data[1]
-    return adc_value
+    # Calculate pH value
+    if time.time() - printTimepoint > 0.8:
+        printTimepoint = time.time()
+        for copyIndex in range(30):
+            analogBufferTemp[copyIndex] = analogBuffer[copyIndex]
+        print("Voltage (mV):", getMedianNum(30))
+        averageVoltage = getMedianNum(30) * (VREF / 1024.0)
+        # Adjust the pH calculation formula based on your sensor's characteristics
+        phValue = calculate_ph(averageVoltage)
+        print("pH Value:", phValue)
 
-def loop():
-    global ph_act
-    while True:
-        for i in range(10):
-            buffer_arr[i] = read_adc(0)
-            time.sleep(0.03)
-        
-        for i in range(9):
-            for j in range(i+1, 10):
-                if buffer_arr[i] > buffer_arr[j]:
-                    temp = buffer_arr[i]
-                    buffer_arr[i] = buffer_arr[j]
-                    buffer_arr[j] = temp
-        
-        avgval = sum(buffer_arr[2:8])
-        volt = float(avgval) * 5.0 / 1024.0 / 6.0
-        ph_act = -5.70 * volt + calibration_value
+        # Reset analog buffer
+        analogBuffer = [0] * 30
 
-        # Print pH value
-        print("pH Val:", ph_act)
-        time.sleep(1)
-
-# Initialize timer
-timer = Timer(TIMER_INTERVAL, display_pHValue)
-timer.start()
-
-if __name__ == "__main__":
-    try:
-        loop()
-    except KeyboardInterrupt:
-        timer.cancel()
-        disp.clear()
-        disp.display()
+    time.sleep(0.1)
