@@ -8,14 +8,14 @@ lcd_columns = 16
 lcd_rows = 2
 
 # Define GPIO pins for SCL and SDA
-scl_pin = board.D27  # Pin 27 (GPIO 0) for SCL
-sda_pin = board.D28  # Pin 28 (GPIO 1) for SDA
+scl_pin = 28  # GPIO 28 (SCL)
+sda_pin = 27  # GPIO 27 (SDA)
 
 # Initialize I2C bus with specified pins
-i2c = busio.I2C(scl_pin, sda_pin)
+i2c = busio.I2C(board.SCL, board.SDA)
 
 # Initialize LCD class
-lcd = character_lcd.Character_LCD_I2C(i2c, lcd_columns, lcd_rows)
+lcd = character_lcd.Character_LCD_I2C(i2c, lcd_columns, lcd_rows, address=0x27)  # Adjust the address if necessary
 
 # Turn on backlight
 lcd.backlight = True
