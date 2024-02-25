@@ -1,23 +1,24 @@
 import spidev
 import time
 
-# Define SPI bus and device (ADC)
+# Initialize SPI
 spi = spidev.SpiDev()
-spi.open(0, 0)  # Check which SPI device is being used on your Pi (0 or 1) and select the appropriate one
+spi.open(0, 0)  # Assuming SPI device 0, chip select 0
 
-# Function to read SPI data from ADC channel
-def read_adc(channel):
-    adc = spi.xfer2([1, (8 + channel) << 4, 0])
-    data = ((adc[1] & 3) << 8) + adc[2]
-    return data
+# Function to read data from pH sensor
+def read_pH():
+    # Read raw data from sensor
+    # Replace this with your actual code to read data from the pH sensor
+    raw_data = spi.xfer([0x00])  # Example SPI read, replace with your implementation
+    return raw_data
 
 try:
     while True:
-        # Read data from ADC connected to pH module
-        adc_value = read_adc(0)  # Replace 0 with the actual channel number your pH module is connected to
-        
-        # Print ADC value
-        print("ADC Value:", adc_value)
+        # Read data from pH sensor
+        sensor_data = read_pH()
+
+        # Print raw sensor data
+        print("Raw pH Sensor Data:", sensor_data)
 
         # Adjust the delay based on your sampling requirements
         time.sleep(1)
