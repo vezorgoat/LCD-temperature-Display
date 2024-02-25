@@ -1,30 +1,39 @@
 import smbus
+import time
+import RPi.GPIO as GPIO
 
-# Define the I2C bus number (usually 1 on Raspberry Pi)
-bus_number = 1
+# Define GPIO pins for SDA0 and SCL0
+SDA_PIN = 28
+SCL_PIN = 29
 
-# Create an instance of the I2C bus
-bus = smbus.SMBus(bus_number)
+# Initialize GPIO
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(SDA_PIN, GPIO.OUT)
+GPIO.setup(SCL_PIN, GPIO.OUT)
 
-# Define the range of I2C addresses to scan
-address_range = range(0x03, 0x78)  # Addresses from 0x03 to 0x77 (inclusive)
+# Initialize I2C bus
+bus = smbus.SMBus(0)  # Use bus 0 for the default I2C interface
 
 def scan_i2c():
     devices = []
-    for address in address_range:
+    for address in range(128):
         try:
             bus.read_byte(address)
-            devices.append(hex(address))
+            devices.append(address)
         except Exception as e:
             pass
     return devices
 
-if __name__ == "__main__":
-    print("Scanning for I2C devices...")
+try:
+    # Scan for I2C devices
     i2c_devices = scan_i2c()
     if i2c_devices:
-        print("Found the following devices:")
+        print("I2C devices found:")
         for device in i2c_devices:
-            print(device)
+            print(f"Address: {hex(device)}")
     else:
         print("No I2C devices found.")
+
+finally:
+    # Clean up GPIO
+    GPIO.cleanup()
