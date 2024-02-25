@@ -1,56 +1,43 @@
 import time
 import sys
-sys.path.append('../')
 from CQRobot_ADS1115 import ADS1115
 
-# ADS1115 configuration
+# Define ADC gain settings
+ADS1115_REG_CONFIG_PGA_6_144V = 0x00
+
+# Initialize ADS1115 ADC
 ads1115 = ADS1115()
-ads1115.setAddr_ADS1115(0x48)
-ads1115.setGain(ADS1115_REG_CONFIG_PGA_6_144V)
+ads1115.setAddr_ADS1115(0x48)  # Set the I2C address of the ADC
+ads1115.setGain(ADS1115_REG_CONFIG_PGA_6_144V)  # Set the gain to 6.144V
 
 # Constants
 VREF = 5.0
 analogBuffer = [0] * 30
-analogBufferTemp = [0] * 30
 analogBufferIndex = 0
-copyIndex = 0
-averageVoltage = 0
-phValue = 0
-temperature = 25  # Temperature in Celsius
 
 # Function to calculate median value
-def getMedianNum(iFilterLen):
-    analogBufferTemp.sort()
-    if iFilterLen & 1 > 0:
-        median_value = analogBufferTemp[(iFilterLen - 1) // 2]
+def getMedianNum(arr):
+    arr.sort()
+    n = len(arr)
+    if n % 2 == 0:
+        return (arr[n//2 - 1] + arr[n//2]) / 2
     else:
-        median_value = (analogBufferTemp[iFilterLen // 2] + analogBufferTemp[iFilterLen // 2 - 1]) / 2
-    return median_value
-
-analogSampleTimepoint = time.time()
-printTimepoint = time.time()
+        return arr[n//2]
 
 while True:
     # Read analog voltage from pH sensor
-    if time.time() - analogSampleTimepoint > 0.04:
-        analogSampleTimepoint = time.time()
-        analogBuffer[analogBufferIndex] = ads1115.readVoltage(0)['r']  # Assuming pH sensor is connected to channel 0
-        analogBufferIndex += 1
-        if analogBufferIndex == 30:
-            analogBufferIndex = 0
+    for i in range(30):
+        analogBuffer[i] = ads1115.readVoltage(0)['r']  # Assuming pH sensor is connected to channel 0
+        time.sleep(0.04)
 
     # Calculate pH value
-    if time.time() - printTimepoint > 0.8:
-        printTimepoint = time.time()
-        for copyIndex in range(30):
-            analogBufferTemp[copyIndex] = analogBuffer[copyIndex]
-        print("Voltage (mV):", getMedianNum(30))
-        averageVoltage = getMedianNum(30) * (VREF / 1024.0)
-        # Adjust the pH calculation formula based on your sensor's characteristics
-        phValue = calculate_ph(averageVoltage)
-        print("pH Value:", phValue)
+    median_voltage = getMedianNum(analogBuffer)
+    average_voltage = median_voltage * (VREF / 1024.0)
+    # Adjust the pH calculation formula based on your sensor's characteristics
+    ph_value = calculate_ph(average_voltage)
 
-        # Reset analog buffer
-        analogBuffer = [0] * 30
+    # Print pH value
+    print("pH Value:", ph_value)
 
-    time.sleep(0.1)
+    # Reset analog buffer
+    analogBuffer = [0] * 30
