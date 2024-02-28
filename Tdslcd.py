@@ -1,10 +1,9 @@
+
 import time
 import smbus
 import drivers
 from datetime import datetime
 from time import sleep
-import sys
-sys.path.append('/path/to/directory/containing/CQRobot_ADS1115.py')
 from CQRobot_ADS1115 import ADS1115
 
 # Define I2C address and register addresses for the TDS sensor
