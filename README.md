@@ -21,3 +21,5 @@ pip install adafruit-circuitpython-charlcd
 
 
 sudo pip install spidev
+
+pip install CQRobot_ADS1115
