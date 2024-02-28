@@ -1,10 +1,11 @@
 
 import time
 import smbus
+import sys
+from CQRobot_ADS1115 import ADS1115
 import drivers
 from datetime import datetime
 from time import sleep
-from CQRobot_ADS1115 import ADS1115
 
 # Define I2C address and register addresses for the TDS sensor
 TDS_ADDRESS = 0x48  # I2C address of the TDS sensor
@@ -65,20 +66,11 @@ try:
         else:
             tds_status = "Unknown"
 
-        # Determine pH status
-        if ph_value < 7:
-            ph_status = "Acidic"
-        elif ph_value > 7:
-            ph_status = "Alkaline"
-        else:
-            ph_status = "Neutral"
-
         # Write time to display
         display.lcd_display_string("Time: " + current_time, 1)
 
         # Write TDS and pH values to display
         display.lcd_display_string("TDS: {}   pH: {:.2f}".format(tds_status, ph_value), 2)
-        display.lcd_display_string("pH Status: " + ph_status, 3)
 
         sleep(1)
 
